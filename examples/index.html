@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>tgwebview Test</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --text: var(--tg-theme-text-color, #000000);
+    --hint: var(--tg-theme-hint-color, #999999);
+    --link: var(--tg-theme-link-color, #168acd);
+    --btn: var(--tg-theme-button-color, #40a7e3);
+    --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    --sec-bg: var(--tg-theme-secondary-bg-color, #f1f1f1);
+    --section-bg: var(--tg-theme-section-bg-color, #ffffff);
+    --section-header: var(--tg-theme-section-header-text-color, #168acd);
+    --destructive: var(--tg-theme-destructive-text-color, #d14e4e);
+    --separator: var(--tg-theme-section-separator-color, #e7e7e7);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    padding: 16px; padding-top: 60px; padding-bottom: 100px;
+    -webkit-user-select: none; user-select: none;
+  }
+  .section {
+    background: var(--section-bg); border-radius: 12px;
+    padding: 16px; margin-bottom: 12px;
+    border: 1px solid var(--separator);
+  }
+  .section-title {
+    font-size: 13px; font-weight: 600; color: var(--section-header);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+  }
+  .info-row {
+    display: flex; justify-content: space-between;
+    padding: 6px 0; border-bottom: 1px solid var(--separator); font-size: 14px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: var(--hint); }
+  .info-value { color: var(--text); font-weight: 500; max-width: 60%; text-align: right; word-break: break-all; }
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .btn {
+    background: var(--btn); color: var(--btn-text); border: none; border-radius: 8px;
+    padding: 10px 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: opacity 0.15s; font-family: inherit;
+  }
+  .btn:active { opacity: 0.7; }
+  .btn-outline { background: transparent; color: var(--btn); border: 1.5px solid var(--btn); }
+  .btn-danger { background: var(--destructive); color: #fff; }
+  .btn-full { grid-column: 1 / -1; }
+  .log-area {
+    background: var(--sec-bg); border-radius: 8px; padding: 10px; margin-top: 10px;
+    font-size: 12px; font-family: 'SF Mono','Menlo','Consolas',monospace;
+    color: var(--text); max-height: 200px; overflow-y: auto;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  .log-area:empty { display: none; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .input-row input {
+    flex: 1; background: var(--sec-bg); border: 1px solid var(--separator);
+    border-radius: 8px; padding: 8px 12px; font-size: 14px;
+    color: var(--text); font-family: inherit; outline: none;
+  }
+  .input-row input::placeholder { color: var(--hint); }
+  .tag {
+    display: inline-block; background: var(--sec-bg); color: var(--hint);
+    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    margin-left: 6px; font-weight: 500; vertical-align: middle;
+  }
+  .tag-ok { background: #d4edda; color: #155724; }
+  .tag-err { background: #f8d7da; color: #721c24; }
+  video { width: 100%; border-radius: 8px; margin-top: 8px; display: none; }
+</style>
+</head>
+<body>
+
+<!-- ═══════ Init Data ═══════ -->
+<div class="section">
+  <div class="section-title">Init Data</div>
+  <div id="init-info"></div>
+</div>
+
+<!-- ═══════ Theme ═══════ -->
+<div class="section">
+  <div class="section-title">Theme</div>
+  <div id="theme-info"></div>
+  <div class="btn-grid" style="margin-top:10px">
+    <button class="btn" onclick="setHeader('#2e7d32')">Header Green</button>
+    <button class="btn" onclick="setHeader('#1565c0')">Header Blue</button>
+    <button class="btn" onclick="setHeader('#000000')">Header Black</button>
+    <button class="btn" onclick="setHeader('#ffffff')">Header White</button>
+    <button class="btn btn-outline" onclick="setBg('#1a1a2e')">BG Dark</button>
+    <button class="btn btn-outline" onclick="setBg('#ffffff')">BG Light</button>
+  </div>
+</div>
+
+<!-- ═══════ Main Button ═══════ -->
+<div class="section">
+  <div class="section-title">Main Button</div>
+  <div class="btn-grid">
+    <button class="btn" onclick="mainBtn('show')">Show</button>
+    <button class="btn btn-outline" onclick="mainBtn('hide')">Hide</button>
+    <button class="btn" onclick="mainBtn('progress')">Progress On</button>
+    <button class="btn btn-outline" onclick="mainBtn('progress_off')">Progress Off</button>
+    <button class="btn btn-full" onclick="mainBtn('text')">Set Text: "Continue"</button>
+  </div>
+  <div class="log-area" id="log-main"></div>
+</div>
+
+<!-- ═══════ Navigation ═══════ -->
+<div class="section">
+  <div class="section-title">Back / Settings Buttons</div>
+  <div class="btn-grid">
+    <button class="btn" onclick="backBtn('show')">Back: Show</button>
+    <button class="btn btn-outline" onclick="backBtn('hide')">Back: Hide</button>
+    <button class="btn" onclick="settingsBtn('show')">Settings: Show</button>
+    <button class="btn btn-outline" onclick="settingsBtn('hide')">Settings: Hide</button>
+  </div>
+  <div class="log-area" id="log-nav"></div>
+</div>
+
+<!-- ═══════ Popups ═══════ -->
+<div class="section">
+  <div class="section-title">Popups</div>
+  <div class="btn-grid btn-grid-3">
+    <button class="btn" onclick="testAlert()">Alert</button>
+    <button class="btn" onclick="testConfirm()">Confirm</button>
+    <button class="btn" onclick="testPopup()">Popup</button>
+  </div>
+  <div class="log-area" id="log-popup"></div>
+</div>
+
+<!-- ═══════ QR Scanner ═══════ -->
+<div class="section">
+  <div class="section-title">QR Scanner</div>
+  <div class="btn-grid">
+    <button class="btn" onclick="scanQR('screen')">Scan from Screen</button>
+    <button class="btn" onclick="scanQR('camera')">Scan from Camera</button>
+  </div>
+  <div class="log-area" id="log-qr"></div>
+</div>
+
+<!-- ═══════ Clipboard ═══════ -->
+<div class="section">
+  <div class="section-title">Clipboard</div>
+  <div class="btn-grid">
+    <button class="btn btn-full" onclick="testClipboard()">Read System Clipboard</button>
+  </div>
+  <div class="log-area" id="log-clip"></div>
+</div>
+
+<!-- ═══════ Camera & Microphone ═══════ -->
+<div class="section">
+  <div class="section-title">Camera & Microphone (getUserMedia)</div>
+  <div class="btn-grid btn-grid-3">
+    <button class="btn" onclick="testMedia('video')">Camera</button>
+    <button class="btn" onclick="testMedia('audio')">Mic</button>
+    <button class="btn btn-danger" onclick="stopMedia()">Stop</button>
+  </div>
+  <video id="cam-preview" autoplay playsinline muted></video>
+  <div class="log-area" id="log-media"></div>
+</div>
+
+<!-- ═══════ CloudStorage ═══════ -->
+<div class="section">
+  <div class="section-title">CloudStorage <span class="tag" id="cloud-tag">MTProto</span></div>
+  <div class="input-row">
+    <input id="cs-key" placeholder="key" value="test_key">
+    <input id="cs-val" placeholder="value" value="hello world">
+  </div>
+  <div class="btn-grid">
+    <button class="btn" onclick="csSave()">Save</button>
+    <button class="btn" onclick="csGet()">Get</button>
+    <button class="btn btn-outline" onclick="csKeys()">Get Keys</button>
+    <button class="btn btn-danger" onclick="csDelete()">Delete</button>
+  </div>
+  <div class="log-area" id="log-cloud"></div>
+</div>
+
+<!-- ═══════ Write Access ═══════ -->
+<div class="section">
+  <div class="section-title">Write Access</div>
+  <div class="btn-grid">
+    <button class="btn btn-full" onclick="testWriteAccess()">Request Write Access</button>
+  </div>
+  <div class="log-area" id="log-write"></div>
+</div>
+
+<!-- ═══════ Biometry ═══════ -->
+<div class="section">
+  <div class="section-title">Biometry (full lifecycle)</div>
+  <div class="btn-grid">
+    <button class="btn" onclick="bioInit()">1. Init</button>
+    <button class="btn" onclick="bioAccess()">2. Request Access</button>
+    <button class="btn" onclick="bioUpdateToken()">3. Save Token</button>
+    <button class="btn" onclick="bioAuth()">4. Authenticate</button>
+  </div>
+  <div class="input-row" style="margin-top:8px">
+    <input id="bio-token" placeholder="token to store" value="my_secret_token_12345">
+  </div>
+  <div class="log-area" id="log-bio"></div>
+</div>
+
+<!-- ═══════ Haptic Feedback ═══════ -->
+<div class="section">
+  <div class="section-title">Haptic Feedback</div>
+  <div class="btn-grid btn-grid-3">
+    <button class="btn" onclick="haptic('impact','light')">Light</button>
+    <button class="btn" onclick="haptic('impact','medium')">Medium</button>
+    <button class="btn" onclick="haptic('impact','heavy')">Heavy</button>
+    <button class="btn btn-outline" onclick="haptic('notification','success')">Success</button>
+    <button class="btn btn-outline" onclick="haptic('notification','warning')">Warning</button>
+    <button class="btn btn-outline" onclick="haptic('notification','error')">Error</button>
+    <button class="btn btn-full" onclick="haptic('selection','')">Selection Changed</button>
+  </div>
+</div>
+
+<!-- ═══════ Location ═══════ -->
+<div class="section">
+  <div class="section-title">Location Manager</div>
+  <div class="btn-grid">
+    <button class="btn" onclick="locInit()">Init</button>
+    <button class="btn" onclick="locGet()">Get Location</button>
+  </div>
+  <div class="log-area" id="log-loc"></div>
+</div>
+
+<!-- ═══════ Gyroscope / Accelerometer / Orientation ═══════ -->
+<div class="section">
+  <div class="section-title">Motion Sensors</div>
+  <div class="btn-grid btn-grid-3">
+    <button class="btn" onclick="sensorStart('Accelerometer')">Accel</button>
+    <button class="btn" onclick="sensorStart('Gyroscope')">Gyro</button>
+    <button class="btn" onclick="sensorStart('DeviceOrientation')">Orient</button>
+  </div>
+  <div class="btn-grid" style="margin-top:8px">
+    <button class="btn btn-danger btn-full" onclick="sensorStop()">Stop All Sensors</button>
+  </div>
+  <div class="log-area" id="log-sensor"></div>
+</div>
+
+<!-- ═══════ Links / Viewport ═══════ -->
+<div class="section">
+  <div class="section-title">Links & Viewport</div>
+  <div class="btn-grid btn-grid-3">
+    <button class="btn" onclick="testLink()">Open Link</button>
+    <button class="btn btn-outline" onclick="testExpand()">Expand</button>
+    <button class="btn btn-outline" onclick="testCloseConfirm()">Close Confirm</button>
+  </div>
+</div>
+
+<!-- ═══════ Invoke Custom Method ═══════ -->
+<div class="section">
+  <div class="section-title">Invoke Custom Method (raw MTProto)</div>
+  <div class="input-row">
+    <input id="invoke-method" placeholder="method" value="getStorageValues">
+    <input id="invoke-params" placeholder='params JSON' value='{"keys":["test_key"]}'>
+  </div>
+  <div class="btn-grid">
+    <button class="btn btn-full" onclick="testInvoke()">Invoke</button>
+  </div>
+  <div class="log-area" id="log-invoke"></div>
+</div>
+
+<!-- ═══════ Page Dump ═══════ -->
+<div class="section">
+  <div class="section-title">Page Dump</div>
+  <div class="btn-grid">
+    <button class="btn" onclick="dumpCookies()">Cookies</button>
+    <button class="btn" onclick="dumpLS()">LocalStorage</button>
+    <button class="btn" onclick="dumpSS()">SessionStorage</button>
+    <button class="btn btn-outline" onclick="dumpHTML()">HTML (console)</button>
+  </div>
+  <div class="log-area" id="log-dump"></div>
+</div>
+
+<!-- ═══════ Event Log ═══════ -->
+<div class="section">
+  <div class="section-title">Event Log</div>
+  <div class="log-area" id="log-events" style="display:block;min-height:60px;"></div>
+  <div class="btn-grid" style="margin-top:8px">
+    <button class="btn btn-outline btn-full" onclick="document.getElementById('log-events').textContent=''">Clear</button>
+  </div>
+</div>
+
+<script>
+var tg = window.Telegram.WebApp;
+
+// ── Logging ──
+function logTo(id, msg) {
+  var el = document.getElementById(id);
+  var time = new Date().toLocaleTimeString('en', {hour12:false});
+  el.textContent += '[' + time + '] ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function elog(msg) { logTo('log-events', msg); }
+
+// ── Init Data ──
+(function() {
+  var info = document.getElementById('init-info');
+  var u = tg.initDataUnsafe.user;
+  var rows = [
+    ['Platform', tg.platform],
+    ['Version', tg.version],
+    ['Color Scheme', tg.colorScheme],
+    ['Viewport Height', tg.viewportHeight + 'px'],
+    ['Stable Height', tg.viewportStableHeight + 'px'],
+    ['Expanded', tg.isExpanded],
+    ['User', u ? u.first_name + ' (@' + u.username + ')' : '(none)'],
+    ['User ID', u ? u.id : '—'],
+    ['initData', tg.initData ? tg.initData.substring(0, 60) + '...' : '(empty)'],
+  ];
+  info.innerHTML = rows.map(function(r) {
+    return '<div class="info-row"><span class="info-label">' + r[0] +
+           '</span><span class="info-value">' + r[1] + '</span></div>';
+  }).join('');
+})();
+
+// ── Theme ──
+(function() {
+  var info = document.getElementById('theme-info');
+  var tp = tg.themeParams;
+  var keys = ['bg_color','text_color','hint_color','link_color','button_color',
+              'button_text_color','secondary_bg_color','header_bg_color'];
+  info.innerHTML = keys.map(function(k) {
+    var v = tp[k] || '—';
+    var swatch = v.startsWith('#') ?
+      '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+v+';margin-right:6px;vertical-align:middle;border:1px solid rgba(0,0,0,0.1)"></span>' : '';
+    return '<div class="info-row"><span class="info-label">' + k +
+           '</span><span class="info-value">' + swatch + v + '</span></div>';
+  }).join('');
+})();
+
+function setHeader(c) { tg.setHeaderColor(c); elog('setHeaderColor(' + c + ')'); }
+function setBg(c) { tg.setBackgroundColor(c); elog('setBackgroundColor(' + c + ')'); }
+
+// ── Main Button ──
+tg.MainButton.onClick(function() { logTo('log-main', 'CLICKED!'); elog('MainButton clicked'); });
+function mainBtn(a) {
+  switch(a) {
+    case 'show': tg.MainButton.setText('Submit').show(); break;
+    case 'hide': tg.MainButton.hide(); break;
+    case 'progress': tg.MainButton.showProgress(true); break;
+    case 'progress_off': tg.MainButton.hideProgress(); break;
+    case 'text': tg.MainButton.setText('Continue'); break;
+  }
+  logTo('log-main', 'MainButton.' + a);
+}
+
+// ── Navigation ──
+tg.BackButton.onClick(function() { logTo('log-nav', 'BackButton clicked!'); elog('BackButton clicked'); });
+tg.SettingsButton.onClick(function() { logTo('log-nav', 'SettingsButton clicked!'); elog('SettingsButton clicked'); });
+function backBtn(a) { a === 'show' ? tg.BackButton.show() : tg.BackButton.hide(); logTo('log-nav', 'Back.' + a); }
+function settingsBtn(a) { a === 'show' ? tg.SettingsButton.show() : tg.SettingsButton.hide(); logTo('log-nav', 'Settings.' + a); }
+
+// ── Popups ──
+function testAlert() {
+  tg.showAlert('Test alert from tgwebview', function() { logTo('log-popup', 'Alert closed'); });
+}
+function testConfirm() {
+  tg.showConfirm('Proceed?', function(ok) { logTo('log-popup', 'Confirm: ' + (ok ? 'YES' : 'NO')); });
+}
+function testPopup() {
+  tg.showPopup({
+    title: 'Choose Action', message: 'Multi-button popup test.',
+    buttons: [
+      {id: 'save', type: 'default', text: 'Save'},
+      {id: 'delete', type: 'destructive', text: 'Delete'},
+      {id: 'cancel', type: 'cancel'},
+    ]
+  }, function(id) { logTo('log-popup', 'Popup → ' + id); });
+}
+
+// ── QR Scanner ──
+function scanQR(source) {
+  logTo('log-qr', 'Scanning (' + source + ')...');
+  // Pass source via the text field — our bridge forwards the full data object
+  // We use TelegramWebviewProxy.postEvent directly to pass custom data
+  if (window.TelegramWebviewProxy) {
+    window.TelegramWebviewProxy.postEvent('web_app_open_scan_qr_popup',
+      JSON.stringify({text: 'Scan QR code', source: source}));
+  } else {
+    tg.showScanQrPopup({text: 'Scan QR code'}, function(data) {
+      logTo('log-qr', 'QR: ' + data);
+      return true;
+    });
+  }
+}
+// Listen for QR results
+tg.onEvent('qrTextReceived', function(e) { logTo('log-qr', 'QR result: ' + (e.data || '(empty)')); elog('QR: ' + e.data); });
+tg.onEvent('scanQrPopupClosed', function() { logTo('log-qr', 'Scanner closed'); });
+
+// ── Clipboard ──
+function testClipboard() {
+  tg.readTextFromClipboard(function(text) {
+    logTo('log-clip', 'Clipboard: ' + (text || '(empty)'));
+    elog('Clipboard: ' + (text ? text.substring(0, 50) : '(empty)'));
+  });
+}
+
+// ── Camera & Microphone ──
+var _mediaStream = null;
+function testMedia(type) {
+  var constraints = type === 'video' ? {video: true} : {audio: true};
+  logTo('log-media', 'Requesting ' + type + '...');
+  navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+    _mediaStream = stream;
+    logTo('log-media', type + ' stream OK — tracks: ' + stream.getTracks().map(function(t){return t.kind+':'+t.label}).join(', '));
+    if (type === 'video') {
+      var v = document.getElementById('cam-preview');
+      v.srcObject = stream;
+      v.style.display = 'block';
+    }
+  }).catch(function(e) {
+    logTo('log-media', 'ERROR: ' + e.name + ' — ' + e.message);
+  });
+}
+function stopMedia() {
+  if (_mediaStream) {
+    _mediaStream.getTracks().forEach(function(t) { t.stop(); });
+    _mediaStream = null;
+  }
+  var v = document.getElementById('cam-preview');
+  v.srcObject = null;
+  v.style.display = 'none';
+  logTo('log-media', 'Streams stopped');
+}
+
+// ── CloudStorage ──
+function csSave() {
+  var k = document.getElementById('cs-key').value, v = document.getElementById('cs-val').value;
+  tg.CloudStorage.setItem(k, v, function(err) { logTo('log-cloud', err ? 'ERR: '+err : 'Saved '+k+' = '+v); });
+}
+function csGet() {
+  var k = document.getElementById('cs-key').value;
+  tg.CloudStorage.getItem(k, function(err, val) { logTo('log-cloud', err ? 'ERR: '+err : k+' = '+JSON.stringify(val)); });
+}
+function csKeys() {
+  tg.CloudStorage.getKeys(function(err, keys) { logTo('log-cloud', err ? 'ERR: '+err : 'Keys: '+JSON.stringify(keys)); });
+}
+function csDelete() {
+  var k = document.getElementById('cs-key').value;
+  tg.CloudStorage.removeItem(k, function(err) { logTo('log-cloud', err ? 'ERR: '+err : 'Deleted '+k); });
+}
+
+// ── Write Access ──
+function testWriteAccess() {
+  tg.requestWriteAccess(function(ok) {
+    logTo('log-write', 'Write access: ' + (ok ? 'GRANTED' : 'DENIED'));
+  });
+}
+
+// ── Biometry ──
+function bioInit() {
+  tg.BiometricManager.init(function() {
+    var bm = tg.BiometricManager;
+    logTo('log-bio',
+      'Init: available=' + bm.isInited +
+      ', type=' + bm.biometricType +
+      ', accessGranted=' + bm.isAccessGranted +
+      ', tokenSaved=' + bm.isBiometricTokenSaved +
+      ', deviceId=' + bm.deviceId
+    );
+  });
+}
+function bioAccess() {
+  tg.BiometricManager.requestAccess({reason: 'Token storage'}, function(ok) {
+    logTo('log-bio', 'Access: ' + (ok ? 'GRANTED' : 'DENIED'));
+    logTo('log-bio', '  isAccessGranted=' + tg.BiometricManager.isAccessGranted);
+  });
+}
+function bioUpdateToken() {
+  var token = document.getElementById('bio-token').value;
+  tg.BiometricManager.updateBiometricToken(token, function(ok) {
+    logTo('log-bio', 'Token update: ' + (ok ? 'OK' : 'FAILED') + ' (' + token.length + ' chars)');
+    logTo('log-bio', '  tokenSaved=' + tg.BiometricManager.isBiometricTokenSaved);
+  });
+}
+function bioAuth() {
+  tg.BiometricManager.authenticate({reason: 'Verify identity'}, function(ok, token) {
+    if (ok) {
+      logTo('log-bio', 'Auth OK! token=' + token);
+    } else {
+      logTo('log-bio', 'Auth FAILED');
+    }
+  });
+}
+
+// ── Haptic ──
+function haptic(type, style) {
+  if (type === 'impact') tg.HapticFeedback.impactOccurred(style);
+  else if (type === 'notification') tg.HapticFeedback.notificationOccurred(style);
+  else tg.HapticFeedback.selectionChanged();
+  elog('Haptic: ' + type + (style ? '(' + style + ')' : ''));
+}
+
+// ── Location ──
+function locInit() {
+  tg.LocationManager.init(function() {
+    var lm = tg.LocationManager;
+    logTo('log-loc', 'Init: inited=' + lm.isInited +
+      ', available=' + lm.isLocationAvailable +
+      ', accessGranted=' + lm.isAccessGranted);
+  });
+}
+function locGet() {
+  tg.LocationManager.getLocation(function(loc) {
+    if (loc) {
+      logTo('log-loc', 'lat=' + loc.latitude + ' lng=' + loc.longitude +
+        (loc.altitude ? ' alt=' + loc.altitude : '') +
+        ' accuracy=' + (loc.horizontal_accuracy || '?'));
+    } else {
+      logTo('log-loc', 'Location unavailable or denied');
+    }
+  });
+}
+
+// ── Motion Sensors ──
+var _sensorCallbacks = {};
+function sensorStart(type) {
+  if (type === 'Accelerometer') {
+    _sensorCallbacks.accel = function(e) { logTo('log-sensor', 'Accel: x='+e.x.toFixed(2)+' y='+e.y.toFixed(2)+' z='+e.z.toFixed(2)); };
+    tg.onEvent('accelerometerChanged', _sensorCallbacks.accel);
+    tg.Accelerometer.start({refresh_rate: 500});
+    logTo('log-sensor', 'Accelerometer started (500ms)');
+  } else if (type === 'Gyroscope') {
+    _sensorCallbacks.gyro = function(e) { logTo('log-sensor', 'Gyro: x='+e.x.toFixed(3)+' y='+e.y.toFixed(3)+' z='+e.z.toFixed(3)); };
+    tg.onEvent('gyroscopeChanged', _sensorCallbacks.gyro);
+    tg.Gyroscope.start({refresh_rate: 500});
+    logTo('log-sensor', 'Gyroscope started (500ms)');
+  } else if (type === 'DeviceOrientation') {
+    _sensorCallbacks.orient = function(e) { logTo('log-sensor', 'Orient: alpha='+e.alpha.toFixed(1)+' beta='+e.beta.toFixed(1)+' gamma='+e.gamma.toFixed(1)); };
+    tg.onEvent('deviceOrientationChanged', _sensorCallbacks.orient);
+    tg.DeviceOrientation.start({refresh_rate: 500});
+    logTo('log-sensor', 'DeviceOrientation started (500ms)');
+  }
+}
+function sensorStop() {
+  try { tg.Accelerometer.stop(); } catch(e) {}
+  try { tg.Gyroscope.stop(); } catch(e) {}
+  try { tg.DeviceOrientation.stop(); } catch(e) {}
+  if (_sensorCallbacks.accel) tg.offEvent('accelerometerChanged', _sensorCallbacks.accel);
+  if (_sensorCallbacks.gyro) tg.offEvent('gyroscopeChanged', _sensorCallbacks.gyro);
+  if (_sensorCallbacks.orient) tg.offEvent('deviceOrientationChanged', _sensorCallbacks.orient);
+  _sensorCallbacks = {};
+  logTo('log-sensor', 'All sensors stopped');
+}
+
+// ── Links / Viewport ──
+function testLink() { tg.openLink('https://github.com/maryny4/tgwebview'); }
+function testExpand() { tg.expand(); elog('Expand'); }
+function testCloseConfirm() { tg.enableClosingConfirmation(); elog('Close confirm enabled'); }
+
+// ── Invoke Custom Method ──
+function testInvoke() {
+  var method = document.getElementById('invoke-method').value;
+  var params;
+  try { params = JSON.parse(document.getElementById('invoke-params').value); }
+  catch(e) { logTo('log-invoke', 'Invalid JSON'); return; }
+  tg.invokeCustomMethod(method, params, function(err, result) {
+    logTo('log-invoke', err ? 'ERR: '+err : 'Result: '+JSON.stringify(result));
+  });
+}
+
+// ── Page Dump ──
+function dumpCookies() { logTo('log-dump', 'Cookies: ' + (document.cookie || '(empty)')); }
+function dumpLS() {
+  var o = {};
+  for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); o[k] = localStorage.getItem(k); }
+  logTo('log-dump', 'LocalStorage: ' + JSON.stringify(o));
+}
+function dumpSS() {
+  var o = {};
+  for (var i = 0; i < sessionStorage.length; i++) { var k = sessionStorage.key(i); o[k] = sessionStorage.getItem(k); }
+  logTo('log-dump', 'SessionStorage: ' + JSON.stringify(o));
+}
+function dumpHTML() {
+  console.log(document.documentElement.outerHTML);
+  logTo('log-dump', 'HTML dumped to console (' + document.documentElement.outerHTML.length + ' chars)');
+}
+
+// ── Global event listeners ──
+tg.onEvent('viewportChanged', function(e) { elog('viewport: h=' + e.height + ' stable=' + e.is_state_stable); });
+tg.onEvent('themeChanged', function() { elog('themeChanged'); });
+
+tg.ready();
+tg.expand();
+</script>
+</body>
+</html>

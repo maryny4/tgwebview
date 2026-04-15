@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+venv*/
+.venv/
+.eggs/
+*.so
+.idea/
+.DS_Store
+.env
+*.session
+*.session-journal
